@@ -4998,6 +4998,13 @@ const COMMANDS_SAFE_FOR_REMOTE = new Set([
   'desktop_get_lan_address',
   'desktop_capture_page_rect',
   'desktop_tray_update',
+  // These are purely local Electron operations, safe regardless of server origin.
+  'desktop_get_installed_apps',
+  'desktop_open_path',
+  'desktop_open_in_app',
+  'desktop_open_file_in_app',
+  'desktop_reveal_path',
+  'desktop_show_app_menu',
 ]);
 
 ipcMain.handle('openchamber:invoke', async (event, command, args) => {

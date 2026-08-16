@@ -62,7 +62,7 @@ const SoundPathRow: React.FC<{
 
   return (
     <section className="p-2">
-      <SettingsGroupTitle className="capitalize">{t(label)}</SettingsGroupTitle>
+      <SettingsGroupTitle className="capitalize">{label}</SettingsGroupTitle>
       <div className="mt-1.5 flex items-center gap-1.5">
         <Input
           value={value}
@@ -678,7 +678,7 @@ export const NotificationSettings: React.FC = () => {
               {(['completion', 'subtask', 'error', 'question'] as const).map((event) => (
                 <SoundPathRow
                   key={event}
-                  label={TEMPLATE_EVENT_LABEL_KEYS[event as NotificationTemplateEvent]}
+                  label={t(TEMPLATE_EVENT_LABEL_KEYS[event as NotificationTemplateEvent])}
                   value={notificationSoundPaths[event]}
                   onChange={(path) => setNotificationSoundPaths((prev) => ({ ...prev, [event]: path }))}
                 />
