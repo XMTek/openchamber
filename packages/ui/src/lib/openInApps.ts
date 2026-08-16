@@ -32,7 +32,7 @@ export const OPEN_IN_APPS: OpenInApp[] = [
 ];
 
 export const DEFAULT_OPEN_IN_APP_ID = 'finder';
-export const OPEN_IN_ALWAYS_AVAILABLE_APP_IDS = new Set(['finder', 'terminal']);
+export const OPEN_IN_ALWAYS_AVAILABLE_APP_IDS = new Set(['finder', 'terminal', 'sublime-text']);
 
 export const getPlatformOpenInApp = (app: OpenInApp): OpenInApp => {
   if (typeof window === 'undefined') {

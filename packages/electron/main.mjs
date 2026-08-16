@@ -4151,6 +4151,13 @@ const handleInvoke = async (browserWindow, command, args = {}) => {
       return null;
     }
 
+    case 'desktop_read_audio_file': {
+      const filePath = typeof args?.path === 'string' ? args.path.trim() : '';
+      if (!filePath) return null;
+      const data = await fsp.readFile(filePath);
+      return data.toString('base64');
+    }
+
     case 'desktop_open_in_app': {
       const projectPath = typeof args.projectPath === 'string' ? args.projectPath.trim() : '';
       const appId = typeof args.appId === 'string' ? args.appId.trim().toLowerCase() : '';
@@ -5005,6 +5012,7 @@ const COMMANDS_SAFE_FOR_REMOTE = new Set([
   'desktop_open_file_in_app',
   'desktop_reveal_path',
   'desktop_show_app_menu',
+  'desktop_read_audio_file',
 ]);
 
 ipcMain.handle('openchamber:invoke', async (event, command, args) => {
