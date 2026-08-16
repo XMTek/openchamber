@@ -43,7 +43,8 @@ import { opencodeClient } from '@/lib/opencode/client';
 import { FileTypeIcon } from '@/components/icons/FileTypeIcon';
 import { Icon } from "@/components/icon/Icon";
 import { getContextFileOpenFailureMessage, validateContextFileOpen } from '@/lib/contextFileOpenGuard';
-import { isBrowserClientRuntime } from '@/lib/desktop';
+import { isBrowserClientRuntime, openDesktopFileInApp, openDesktopPath } from '@/lib/desktop';
+import { useOpenInAppsStore } from '@/stores/useOpenInAppsStore';
 import { useI18n } from '@/lib/i18n';
 
 type FileNode = {
@@ -228,7 +229,21 @@ const FileRow: React.FC<FileRowProps> = ({
   const { canRename, canCreateFile, canCreateFolder, canDelete, canReveal } = permissions;
   const canDownload = !isDir && Boolean(downloadFile);
   const canRevealPath = canReveal && !isBrowserClient;
-  const hasMenuActions = canRename || canCreateFile || canCreateFolder || canDelete || canDownload || canRevealPath;
+  const openInApps = useOpenInAppsStore((state) => state.availableApps);
+  const canOpenInApp = !isBrowserClient && openInApps.length > 0;
+  const hasMenuActions = canRename || canCreateFile || canCreateFolder || canDelete || canDownload || canRevealPath || canOpenInApp;
+
+  const handleOpenInApp = React.useCallback(async (app: { id: string; appName: string; label: string }) => {
+    if (isDir) {
+      const opened = await openDesktopPath(node.path, app.appName);
+      if (!opened) toast.error(`Failed to open in ${app.label}`);
+      return;
+    }
+    const openedInApp = await openDesktopFileInApp(node.path, app.id, app.appName);
+    if (openedInApp) return;
+    const opened = await openDesktopPath(node.path, app.appName);
+    if (!opened) toast.error(`Failed to open in ${app.label}`);
+  }, [isDir, node.path]);
 
   // Menu open state is local to each row so opening a menu in one row
   // never re-renders its siblings. Previously this state lived on the
@@ -296,6 +311,19 @@ const FileRow: React.FC<FileRowProps> = ({
         <Item onClick={(e: React.MouseEvent) => { e.stopPropagation(); onRevealPath(node.path); }}>
           <Icon name="folder-received" className="mr-2 h-4 w-4" /> {t(getRevealLabelKey())}
         </Item>
+      )}
+      {canOpenInApp && (
+        <>
+          <Separator />
+          {openInApps.map((app) => (
+            <Item
+              key={app.id}
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); void handleOpenInApp(app); }}
+            >
+              <Icon name="file-transfer" className="mr-2 h-4 w-4" /> Open in {app.label}
+            </Item>
+          ))}
+        </>
       )}
       {isDir && (canCreateFile || canCreateFolder) && (
         <>
@@ -538,6 +566,11 @@ export const SidebarFilesTree: React.FC = () => {
   const [dialogData, setDialogData] = React.useState<{ path: string; name?: string; type?: 'file' | 'directory' } | null>(null);
   const [dialogInputValue, setDialogInputValue] = React.useState('');
   const [isDialogSubmitting, setIsDialogSubmitting] = React.useState(false);
+
+  const initializeOpenInApps = useOpenInAppsStore((state) => state.initialize);
+  React.useEffect(() => {
+    if (!isBrowserClient) initializeOpenInApps();
+  }, [isBrowserClient, initializeOpenInApps]);
 
   const canCreateFile = Boolean(files.writeFile);
   const canCreateFolder = Boolean(files.createDirectory);

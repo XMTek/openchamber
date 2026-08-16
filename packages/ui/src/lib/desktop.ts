@@ -969,7 +969,7 @@ export const fetchDesktopInstalledApps = async (
   apps: string[],
   force?: boolean
 ): Promise<FetchDesktopInstalledAppsResult> => {
-  if (!hasDesktopInvoke() || !isDesktopLocalOriginActive()) {
+  if (!hasDesktopInvoke()) {
     return { apps: [], success: false, hasCache: false, isCacheStale: false };
   }
 

@@ -49,6 +49,8 @@ import {
 import { useConfigStore } from "@/stores/useConfigStore"
 import { useTodosPersistStore } from "@/stores/useTodosPersistStore"
 import { cleanupPersistedSessionState } from "./session-deletion-cleanup"
+import { useUIStore } from "@/stores/useUIStore"
+import { playNotificationSound } from "@/lib/notificationSound"
 import { toast } from "@/components/ui"
 import { appendNotification } from "./notification-store"
 import { applyGlobalSessionStatusEvent, applyGlobalSessionStatusSnapshot, useGlobalSessionStatusStore } from "./global-session-status"
@@ -455,6 +457,20 @@ const handleUiNotificationEvent = (payload: Event, fallbackDirectory: string): b
   }
 
   const notification = properties as UiNotificationPayload
+
+  // Play custom sound for this notification event (desktop only, no-ops if path is empty).
+  const uiState = useUIStore.getState()
+  if (uiState.nativeNotificationsEnabled) {
+    const kind = asOptionalString(notification.kind)
+    const soundPaths = uiState.notificationSoundPaths
+    const soundPath =
+      kind === 'error' ? soundPaths.error :
+      kind === 'question' ? soundPaths.question :
+      kind === 'subtask' ? soundPaths.subtask :
+      soundPaths.completion
+    playNotificationSound(soundPath)
+  }
+
   if ((notification.desktopNotificationDelivered === true || notification.desktopStdoutActive === true) && getRuntimeKey() === "local") {
     return true
   }

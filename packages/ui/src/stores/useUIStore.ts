@@ -738,6 +738,14 @@ interface UIStore {
     subtask: { title: string; message: string };
   };
 
+  // Per-event custom sound file paths (desktop only, absolute path to .wav/.mp3)
+  notificationSoundPaths: {
+    completion: string;
+    error: string;
+    question: string;
+    subtask: string;
+  };
+
   // Summarization settings
   summarizeLastMessage: boolean;
   summaryThreshold: number;   // chars — messages longer than this get summarized
@@ -915,6 +923,9 @@ interface UIStore {
   setNotificationTemplates: (
     templates: UIStore['notificationTemplates'] | ((current: UIStore['notificationTemplates']) => UIStore['notificationTemplates']),
   ) => void;
+  setNotificationSoundPaths: (
+    paths: UIStore['notificationSoundPaths'] | ((current: UIStore['notificationSoundPaths']) => UIStore['notificationSoundPaths']),
+  ) => void;
   setSummarizeLastMessage: (value: boolean) => void;
   setSummaryThreshold: (value: number) => void;
   setSummaryLength: (value: number) => void;
@@ -1069,6 +1080,12 @@ export const useUIStore = create<UIStore>()(
           error: { ...EMPTY_NOTIFICATION_TEMPLATES.error },
           question: { ...EMPTY_NOTIFICATION_TEMPLATES.question },
           subtask: { ...EMPTY_NOTIFICATION_TEMPLATES.subtask },
+        },
+        notificationSoundPaths: {
+          completion: '',
+          error: '',
+          question: '',
+          subtask: '',
         },
 
         // Summarization settings
@@ -2290,6 +2307,13 @@ export const useUIStore = create<UIStore>()(
               : templates,
           }));
         },
+        setNotificationSoundPaths: (paths) => {
+          set((state) => ({
+            notificationSoundPaths: typeof paths === 'function'
+              ? paths(state.notificationSoundPaths)
+              : paths,
+          }));
+        },
         setSummarizeLastMessage: (value) => { set({ summarizeLastMessage: value }); },
         setSummaryThreshold: (value) => { set({ summaryThreshold: value }); },
         setSummaryLength: (value) => { set({ summaryLength: value }); },
@@ -2681,6 +2705,7 @@ export const useUIStore = create<UIStore>()(
           notifyOnError: state.notifyOnError,
           notifyOnQuestion: state.notifyOnQuestion,
           notificationTemplates: state.notificationTemplates,
+          notificationSoundPaths: state.notificationSoundPaths,
           summarizeLastMessage: state.summarizeLastMessage,
           summaryThreshold: state.summaryThreshold,
           summaryLength: state.summaryLength,

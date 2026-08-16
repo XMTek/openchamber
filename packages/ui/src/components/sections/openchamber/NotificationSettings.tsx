@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { getClientPlatform } from '@/lib/platform';
 import { useI18n } from '@/lib/i18n';
+import { playNotificationSound } from '@/lib/notificationSound';
 import {
   SettingsSection,
   SettingsTwoColumn,
@@ -41,6 +42,66 @@ const TEMPLATE_EVENT_LABEL_KEYS = {
   question: 'settings.notifications.page.template.event.question',
 } as const satisfies Record<NotificationTemplateEvent, string>;
 
+const SoundPathRow: React.FC<{
+  label: string;
+  value: string;
+  onChange: (path: string) => void;
+}> = ({ label, value, onChange }) => {
+  const { t } = useI18n();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Electron extends File with a .path property pointing to the filesystem path.
+    const path = (file as File & { path?: string }).path ?? file.name;
+    onChange(path);
+    // Reset so selecting the same file again still triggers onChange.
+    e.target.value = '';
+  };
+
+  return (
+    <section className="p-2">
+      <SettingsGroupTitle className="capitalize">{t(label)}</SettingsGroupTitle>
+      <div className="mt-1.5 flex items-center gap-1.5">
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Path to .wav or .mp3"
+          className="h-7 flex-1 font-mono text-xs"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 shrink-0"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          Browse
+        </Button>
+        {value && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 shrink-0"
+            onClick={() => playNotificationSound(value)}
+          >
+            Test
+          </Button>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".wav,.mp3"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      </div>
+    </section>
+  );
+};
+
 export const NotificationSettings: React.FC = () => {
   const { t } = useI18n();
   const isDesktop = React.useMemo(() => isDesktopShell(), []);
@@ -68,6 +129,8 @@ export const NotificationSettings: React.FC = () => {
   const setNotifyOnQuestion = useUIStore(state => state.setNotifyOnQuestion);
   const notificationTemplates = useUIStore(state => state.notificationTemplates);
   const setNotificationTemplates = useUIStore(state => state.setNotificationTemplates);
+  const notificationSoundPaths = useUIStore(state => state.notificationSoundPaths);
+  const setNotificationSoundPaths = useUIStore(state => state.setNotificationSoundPaths);
 
   const [notificationPermission, setNotificationPermission] = React.useState<NotificationPermission>('default');
   const [pushSupported, setPushSupported] = React.useState(false);
@@ -604,6 +667,24 @@ export const NotificationSettings: React.FC = () => {
             )}
 
           </>
+        )}
+
+        {isDesktop && (
+          <SettingsSection
+            title="Custom Sounds"
+            description="Play a local audio file (.wav or .mp3) when a notification fires. Enter the full path or use Browse to pick a file."
+          >
+            <SettingsTwoColumn className="gap-2 md:grid-cols-2 md:gap-3 lg:gap-3">
+              {(['completion', 'subtask', 'error', 'question'] as const).map((event) => (
+                <SoundPathRow
+                  key={event}
+                  label={TEMPLATE_EVENT_LABEL_KEYS[event as NotificationTemplateEvent]}
+                  value={notificationSoundPaths[event]}
+                  onChange={(path) => setNotificationSoundPaths((prev) => ({ ...prev, [event]: path }))}
+                />
+              ))}
+            </SettingsTwoColumn>
+          </SettingsSection>
         )}
 
         {isBrowser && (
