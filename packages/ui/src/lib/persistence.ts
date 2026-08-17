@@ -546,6 +546,7 @@ const materializeAuthoritativeUiSettings = (settings: DesktopSettings): DesktopS
     notifyOnError: defaults.notifyOnError,
     notifyOnQuestion: defaults.notifyOnQuestion,
     notificationTemplates: defaults.notificationTemplates,
+    notificationSoundPaths: defaults.notificationSoundPaths,
     summarizeLastMessage: defaults.summarizeLastMessage,
     summaryThreshold: defaults.summaryThreshold,
     summaryLength: defaults.summaryLength,
@@ -702,6 +703,12 @@ const applyDesktopUiPreferences = (settings: DesktopSettings) => {
   }
   if (settings.notificationTemplates && typeof settings.notificationTemplates === 'object') {
     store.setNotificationTemplates(settings.notificationTemplates);
+  }
+  if (settings.notificationSoundPaths && typeof settings.notificationSoundPaths === 'object') {
+    store.setNotificationSoundPaths((prev) => ({
+      ...prev,
+      ...settings.notificationSoundPaths!,
+    }));
   }
   if (typeof settings.summarizeLastMessage === 'boolean' && settings.summarizeLastMessage !== store.summarizeLastMessage) {
     store.setSummarizeLastMessage(settings.summarizeLastMessage);
@@ -1253,6 +1260,27 @@ const sanitizeWebSettings = (payload: unknown): DesktopSettings | null => {
         question: question ?? { title: 'Input Needed', message: 'Please provide input to continue.' },
         subtask: subtask ?? { title: 'Subtask Complete', message: 'A subtask has finished.' },
       };
+    }
+  }
+  if (candidate.notificationSoundPaths && typeof candidate.notificationSoundPaths === 'object') {
+    const paths = candidate.notificationSoundPaths as Record<string, unknown>;
+    const validatePath = (key: string): string | undefined => {
+      const value = paths[key];
+      return typeof value === 'string' ? value : undefined;
+    };
+    const start = validatePath('start');
+    const completion = validatePath('completion');
+    const error = validatePath('error');
+    const question = validatePath('question');
+    const subtask = validatePath('subtask');
+    const soundPaths: Record<string, string> = {};
+    if (start !== undefined) soundPaths.start = start;
+    if (completion !== undefined) soundPaths.completion = completion;
+    if (error !== undefined) soundPaths.error = error;
+    if (question !== undefined) soundPaths.question = question;
+    if (subtask !== undefined) soundPaths.subtask = subtask;
+    if (Object.keys(soundPaths).length > 0) {
+      result.notificationSoundPaths = soundPaths;
     }
   }
   if (typeof candidate.summarizeLastMessage === 'boolean') {

@@ -48,6 +48,11 @@ export const getPlatformOpenInApp = (app: OpenInApp): OpenInApp => {
       return { ...app, label: 'File Manager' };
     }
   }
+  if (app.id === 'terminal') {
+    if (platform === 'win32') {
+      return { ...app, label: 'Terminal', appName: 'Windows Terminal' };
+    }
+  }
   return app;
 };
 

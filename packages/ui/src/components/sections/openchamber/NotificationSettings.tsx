@@ -51,20 +51,18 @@ const SoundPathRow: React.FC<{
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleBrowse = async () => {
-    const bridge = (window as unknown as { __OPENCHAMBER_DESKTOP__?: { openDialog?: (opts: unknown) => Promise<{ canceled: boolean; filePaths: string[] }> } }).__OPENCHAMBER_DESKTOP__;
+    const bridge = (window as unknown as { __OPENCHAMBER_DESKTOP__?: { openDialog?: (opts: unknown) => Promise<string | null> } }).__OPENCHAMBER_DESKTOP__;
     if (bridge?.openDialog) {
-      try {
-        const result = await bridge.openDialog({
-          properties: ['openFile'],
-          filters: [{ name: 'Audio Files', extensions: ['wav', 'mp3'] }],
-        });
-        if (!result.canceled && result.filePaths[0]) {
-          onChange(result.filePaths[0]);
-        }
+      const result = await bridge.openDialog({
+        properties: ['openFile'],
+        filters: [{ name: 'Audio Files', extensions: ['wav', 'mp3'] }],
+      });
+      if (typeof result === 'string' && result) {
+        onChange(result);
         return;
-      } catch {
-        // Fall through to input-based picker.
       }
+      // null = cancelled — also return without opening fallback input
+      return;
     }
     fileInputRef.current?.click();
   };

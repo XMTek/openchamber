@@ -91,6 +91,15 @@ export type DesktopSettings = {
     subtask: { title: string; message: string };
   };
 
+  // Per-event custom sound file paths (desktop only, absolute path to .wav/.mp3)
+  notificationSoundPaths?: {
+    start?: string;
+    completion?: string;
+    error?: string;
+    question?: string;
+    subtask?: string;
+  };
+
   // Summarization settings
   summarizeLastMessage?: boolean;
   summaryThreshold?: number;
