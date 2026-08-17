@@ -397,6 +397,7 @@ async function materializeSessionFromServer(
 // Used to determine if user is currently viewing the session when a notification arrives.
 let _activeDirectory = ""
 let _activeSession = ""
+let _lastStartSoundMs = 0
 const externallyViewedSessions = new Map<string, number>()
 const EXTERNAL_VIEW_TTL_MS = 15_000
 
@@ -1470,12 +1471,17 @@ export function handleEvent(
   applyGlobalSessionStatusEvent(directory, payload)
 
   // Play start sound when a session transitions to busy.
+  // Debounced to 2s — the same event can arrive from multiple paths.
   if (payload.type === "session.status") {
     const props = (payload as { properties?: { status?: { type?: string } } }).properties
     if (props?.status?.type === "busy") {
-      const uiState = useUIStore.getState()
-      if (uiState.nativeNotificationsEnabled) {
-        playNotificationSound(uiState.notificationSoundPaths.start)
+      const now = Date.now()
+      if (now - _lastStartSoundMs > 2000) {
+        _lastStartSoundMs = now
+        const uiState = useUIStore.getState()
+        if (uiState.nativeNotificationsEnabled) {
+          playNotificationSound(uiState.notificationSoundPaths.start)
+        }
       }
     }
   }
