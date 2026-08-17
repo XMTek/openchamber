@@ -3359,10 +3359,31 @@ const runWhere = (program) => {
   return first || null;
 };
 
+const WINDOWS_APP_KNOWN_PATHS = {
+  'sublime-text': [
+    'C:\\Program Files\\Sublime Text\\sublime_text.exe',
+    'C:\\Program Files\\Sublime Text 3\\sublime_text.exe',
+    'C:\\Program Files (x86)\\Sublime Text\\sublime_text.exe',
+    'C:\\Program Files (x86)\\Sublime Text 3\\sublime_text.exe',
+  ],
+  'vscode': [
+    'C:\\Program Files\\Microsoft VS Code\\Code.exe',
+    'C:\\Users\\' + (process.env.USERNAME || '') + '\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe',
+  ],
+  'cursor': [
+    'C:\\Users\\' + (process.env.USERNAME || '') + '\\AppData\\Local\\Programs\\cursor\\Cursor.exe',
+  ],
+};
+
 const findWindowsExecutable = (appId) => {
   for (const program of WINDOWS_APP_EXECUTABLES[appId] || []) {
     const resolved = runWhere(program);
     if (resolved) return resolved;
+  }
+  // Fall back to known installation paths when not in PATH.
+  const knownPaths = WINDOWS_APP_KNOWN_PATHS[appId] || [];
+  for (const knownPath of knownPaths) {
+    if (fs.existsSync(knownPath)) return knownPath;
   }
   return null;
 };
