@@ -56,7 +56,7 @@ export const playNotificationSound = (filePath: string): void => {
 
   if (bridge) {
     // In Electron: read file via IPC (safe from any origin) and play as data URL.
-    bridge.invoke('openchamber:invoke', 'desktop_read_audio_file', { path: filePath.trim() })
+    bridge.invoke('desktop_read_audio_file', { path: filePath.trim() })
       .then((base64) => {
         if (typeof base64 !== 'string' || !base64) return;
         const mime = getAudioMimeType(filePath);
