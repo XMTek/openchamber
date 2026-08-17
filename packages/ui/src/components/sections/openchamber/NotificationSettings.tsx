@@ -1,6 +1,6 @@
 import React from 'react';
 import { useUIStore } from '@/stores/useUIStore';
-import { isDesktopShell, isVSCodeRuntime } from '@/lib/desktop';
+import { isDesktopShell, isVSCodeRuntime, openDesktopFileDialog } from '@/lib/desktop';
 import { toast } from '@/components/ui';
 import { getRegisteredRuntimeAPIs } from '@/contexts/runtimeAPIRegistry';
 import { Input } from '@/components/ui/input';
@@ -51,17 +51,9 @@ const SoundPathRow: React.FC<{
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleBrowse = async () => {
-    const bridge = (window as unknown as { __OPENCHAMBER_DESKTOP__?: { openDialog?: (opts: unknown) => Promise<string | null> } }).__OPENCHAMBER_DESKTOP__;
-    if (bridge?.openDialog) {
-      const result = await bridge.openDialog({
-        properties: ['openFile'],
-        filters: [{ name: 'Audio Files', extensions: ['wav', 'mp3'] }],
-      });
-      if (typeof result === 'string' && result) {
-        onChange(result);
-        return;
-      }
-      // null = cancelled — also return without opening fallback input
+    const result = await openDesktopFileDialog([{ name: 'Audio Files', extensions: ['wav', 'mp3'] }]);
+    if (result) {
+      onChange(result);
       return;
     }
     fileInputRef.current?.click();
@@ -94,17 +86,16 @@ const SoundPathRow: React.FC<{
         >
           Browse
         </Button>
-        {value && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 shrink-0"
-            onClick={() => playNotificationSound(value)}
-          >
-            Test
-          </Button>
-        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 shrink-0"
+          disabled={!value}
+          onClick={() => playNotificationSound(value)}
+        >
+          Test
+        </Button>
         <input
           ref={fileInputRef}
           type="file"

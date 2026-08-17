@@ -836,7 +836,7 @@ export const getDesktopLanAddress = async (): Promise<string | null> => {
 };
 
 export const openDesktopPath = async (path: string, app?: string | null): Promise<boolean> => {
-  if (!hasDesktopInvoke() || !isDesktopLocalOriginActive()) {
+  if (!hasDesktopInvoke()) {
     return false;
   }
 
@@ -937,7 +937,7 @@ export const openDesktopFileInApp = async (
   appId: string,
   appName: string,
 ): Promise<boolean> => {
-  if (!hasDesktopInvoke() || !isDesktopLocalOriginActive()) {
+  if (!hasDesktopInvoke()) {
     return false;
   }
 
@@ -960,6 +960,13 @@ export const openDesktopFileInApp = async (
     console.warn('Failed to open file in app', error);
     return false;
   }
+};
+
+export const openDesktopFileDialog = async (
+  filters?: Array<{ name: string; extensions: string[] }>
+): Promise<string | null> => {
+  if (!hasDesktopInvoke()) return null;
+  return invokeDesktop<string>('desktop_open_file_dialog', filters ? { filters } : {});
 };
 
 export type InstalledDesktopAppInfo = {

@@ -4718,6 +4718,18 @@ const handleInvoke = async (browserWindow, command, args = {}) => {
       sshManager.clearLogsForInstance(String(args.id || '').trim());
       return null;
 
+    case 'desktop_open_file_dialog': {
+      // Allowed from remote origins — opens a local file picker scoped to audio files.
+      const filters = Array.isArray(args.filters) ? args.filters : [{ name: 'Audio Files', extensions: ['wav', 'mp3'] }];
+      const result = await dialog.showOpenDialog(browserWindow || undefined, {
+        title: 'Select Audio File',
+        filters,
+        properties: ['openFile'],
+      });
+      if (result.canceled || !result.filePaths[0]) return null;
+      return result.filePaths[0];
+    }
+
     default:
       throw new Error(`Unknown desktop command: ${command}`);
   }
@@ -5038,6 +5050,7 @@ const COMMANDS_SAFE_FOR_REMOTE = new Set([
   'desktop_open_path',
   'desktop_open_in_app',
   'desktop_open_file_in_app',
+  'desktop_open_file_dialog',
   'desktop_reveal_path',
   'desktop_show_app_menu',
   'desktop_read_audio_file',
