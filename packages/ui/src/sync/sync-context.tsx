@@ -1469,6 +1469,17 @@ export function handleEvent(
   // (unopened directories, or list/status races for just-created sessions).
   applyGlobalSessionStatusEvent(directory, payload)
 
+  // Play start sound when a session transitions to busy.
+  if (payload.type === "session.status") {
+    const props = (payload as { properties?: { status?: { type?: string } } }).properties
+    if (props?.status?.type === "busy") {
+      const uiState = useUIStore.getState()
+      if (uiState.nativeNotificationsEnabled) {
+        playNotificationSound(uiState.notificationSoundPaths.start)
+      }
+    }
+  }
+
   // Global events
   if (directory === "global" || !directory) {
     const recent = isRecentBoot()

@@ -675,6 +675,12 @@ export const NotificationSettings: React.FC = () => {
             description="Play a local audio file (.wav or .mp3) when a notification fires. Enter the full path or use Browse to pick a file."
           >
             <SettingsTwoColumn className="gap-2 md:grid-cols-2 md:gap-3 lg:gap-3">
+              <SoundPathRow
+                key="start"
+                label="Start"
+                value={notificationSoundPaths.start}
+                onChange={(path) => setNotificationSoundPaths((prev) => ({ ...prev, start: path }))}
+              />
               {(['completion', 'subtask', 'error', 'question'] as const).map((event) => (
                 <SoundPathRow
                   key={event}
