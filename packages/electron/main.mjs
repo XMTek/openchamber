@@ -4221,6 +4221,13 @@ const handleInvoke = async (browserWindow, command, args = {}) => {
       if (!filePath || !appId || !appName) {
         throw new Error('File path, app id, and app name are required');
       }
+      if (process.platform === 'win32') {
+        // Skip local path validation — file may be on a remote server.
+        // Let the target app handle missing files.
+        const normalizedPath = path.resolve(filePath);
+        runSpecChain(buildWindowsOpenFileSpecs({ filePath: normalizedPath, appId, appName }), appName);
+        return null;
+      }
       const validated = await validateLocalPath(filePath, 'File path');
       if (process.platform === 'win32') {
         runSpecChain(buildWindowsOpenFileSpecs({ filePath: validated.path, appId, appName }), appName);
