@@ -1,5 +1,67 @@
 # <picture><source media="(prefers-color-scheme: dark)" srcset="docs/references/badges/openchamber-logo-dark.svg"><img src="docs/references/badges/openchamber-logo-light.svg" width="32" height="32" align="absmiddle" /></picture> OpenChamber
 
+## Branch: feature/open-in-file-tree
+
+This branch adds two personal features. They work fully in dev mode (`bun run electron:dev`). The packaged app requires a rebuild (`bun run electron:build`) to pick up the Electron-side IPC changes.
+
+### Feature 1: Open In (file tree context menu)
+
+Right-click any file or folder in the sidebar file tree to get an "Open in [App]" menu. Sublime Text always appears regardless of whether it is in your PATH. Other editors (VS Code, Cursor, etc.) appear if detected.
+
+**To test:** Run `electron:dev`, open a project, right-click a file in the left sidebar.
+
+**Packaged app:** Requires rebuild for IPC to work (the menu item will appear but clicking it needs the new `main.mjs`).
+
+### Feature 2: Custom Notification Sounds
+
+Settings -- Notifications -- Custom Sounds. Enter a full path to a `.wav` or `.mp3` file per event type (Start, Completion, Subtask, Error, Question). Browse button opens a file picker. Test button plays the sound immediately.
+
+Sounds play via Electron IPC so they work even when the UI is served from a remote server.
+
+**To test:** Run `electron:dev`. Before the window connects to your remote server, go to Settings -- Notifications. The Custom Sounds section appears at the bottom. Enter a path like `C:\Windows\Media\notify.wav` and hit Test.
+
+**Note:** The Custom Sounds section is gated on `isDesktop` (Electron only). It does not appear in a plain browser tab.
+
+### Dev mode setup (new machine)
+
+Prerequisites: Node.js 22+, bun (`powershell -c "irm bun.sh/install.ps1 | iex"`)
+
+```powershell
+# Add bun to PATH for this session if needed
+$env:Path += ";C:\Users\<you>\.bun\bin"
+
+# Clone or pull the branch
+git clone https://github.com/XMTek/openchamber.git
+cd openchamber
+git checkout feature/open-in-file-tree
+
+# Install and run
+bun install
+bun run electron:dev
+```
+
+The Electron window opens at `http://127.0.0.1:5173`. **Test features before the window connects to your remote server**, or use the host switcher to switch back to local.
+
+### Testing sounds before connecting to remote
+
+When `electron:dev` launches, the window starts on the local HMR server where all source changes are live. Navigate to Settings -- Notifications immediately. Once you connect to a remote OpenCode server, the window navigates to that server's URL and serves its own (older) UI bundle instead.
+
+### Branch contents
+
+| File | What changed |
+|---|---|
+| `packages/ui/src/components/layout/SidebarFilesTree.tsx` | Open In menu items added to context menu and ... button |
+| `packages/ui/src/lib/openInApps.ts` | Sublime Text added to always-available list |
+| `packages/ui/src/stores/useOpenInAppsStore.ts` | Removed `isDesktopLocalOriginActive()` guard so app scan works on remote server connections |
+| `packages/ui/src/lib/desktop.ts` | Same guard removed from `fetchDesktopInstalledApps` |
+| `packages/ui/src/lib/notificationSound.ts` | Sound playback via Electron IPC (works from any origin) |
+| `packages/ui/src/stores/useUIStore.ts` | `notificationSoundPaths` state (start/completion/error/question/subtask) |
+| `packages/ui/src/sync/sync-context.tsx` | Sound triggered on notification events and session busy status |
+| `packages/ui/src/components/sections/openchamber/NotificationSettings.tsx` | Custom Sounds settings section |
+| `packages/electron/main.mjs` | `desktop_read_audio_file` IPC handler; open/reveal/installed-apps commands added to remote-origin allowlist |
+
+
+
 [![GitHub stars](https://img.shields.io/github/stars/openchamber/openchamber?style=flat&labelColor=100F0F&color=66800B)](https://github.com/openchamber/openchamber/stargazers)
 [![GitHub release](https://img.shields.io/github/v/release/openchamber/openchamber?style=flat&labelColor=100F0F&color=205EA6)](https://github.com/openchamber/openchamber/releases/latest)
 [![Discord](https://img.shields.io/badge/Discord-join.svg?style=flat&labelColor=100F0F&color=8B7EC8&logo=discord&logoColor=FFFCF0)](https://discord.gg/ZYRSdnwwKA)
