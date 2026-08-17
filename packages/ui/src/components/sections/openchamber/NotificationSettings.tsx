@@ -687,6 +687,12 @@ export const NotificationSettings: React.FC = () => {
                 value={notificationSoundPaths.start}
                 onChange={(path) => setNotificationSoundPaths((prev) => ({ ...prev, start: path }))}
               />
+              <SoundPathRow
+                key="subagentStart"
+                label="Subagent Start"
+                value={notificationSoundPaths.subagentStart}
+                onChange={(path) => setNotificationSoundPaths((prev) => ({ ...prev, subagentStart: path }))}
+              />
               {(['completion', 'subtask', 'error', 'question'] as const).map((event) => (
                 <SoundPathRow
                   key={event}

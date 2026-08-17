@@ -741,6 +741,7 @@ interface UIStore {
   // Per-event custom sound file paths (desktop only, absolute path to .wav/.mp3)
   notificationSoundPaths: {
     start: string;
+    subagentStart: string;
     completion: string;
     error: string;
     question: string;
@@ -1084,6 +1085,7 @@ export const useUIStore = create<UIStore>()(
         },
         notificationSoundPaths: {
           start: '',
+          subagentStart: '',
           completion: '',
           error: '',
           question: '',

@@ -1269,12 +1269,14 @@ const sanitizeWebSettings = (payload: unknown): DesktopSettings | null => {
       return typeof value === 'string' ? value : undefined;
     };
     const start = validatePath('start');
+    const subagentStart = validatePath('subagentStart');
     const completion = validatePath('completion');
     const error = validatePath('error');
     const question = validatePath('question');
     const subtask = validatePath('subtask');
     const soundPaths: Record<string, string> = {};
     if (start !== undefined) soundPaths.start = start;
+    if (subagentStart !== undefined) soundPaths.subagentStart = subagentStart;
     if (completion !== undefined) soundPaths.completion = completion;
     if (error !== undefined) soundPaths.error = error;
     if (question !== undefined) soundPaths.question = question;

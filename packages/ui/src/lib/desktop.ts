@@ -94,6 +94,7 @@ export type DesktopSettings = {
   // Per-event custom sound file paths (desktop only, absolute path to .wav/.mp3)
   notificationSoundPaths?: {
     start?: string;
+    subagentStart?: string;
     completion?: string;
     error?: string;
     question?: string;

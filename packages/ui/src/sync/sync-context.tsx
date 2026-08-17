@@ -1480,7 +1480,32 @@ export function handleEvent(
         _lastStartSoundMs = now
         const uiState = useUIStore.getState()
         if (uiState.nativeNotificationsEnabled) {
-          playNotificationSound(uiState.notificationSoundPaths.start)
+          // Subagent/task sessions carry a parentID; play a distinct sound so
+          // users can configure or silence subagent starts independently.
+          const busySessionId = getSessionIdFromPayload(payload)
+          let isSubagent = false
+          if (busySessionId) {
+            const dirStore = directory ? childStores.getChild(directory) : undefined
+            const storeState = dirStore ? getDirectoryEventState(dirStore, batch) : null
+            const busySession = storeState?.session.find((s) => s.id === busySessionId)
+            if (busySession) {
+              isSubagent = Boolean((busySession as { parentID?: string }).parentID)
+            } else {
+              // Fallback: scan all child stores for the session.
+              for (const [, childStore] of childStores.children) {
+                const state = getDirectoryEventState(childStore, batch)
+                const found = state.session.find((s) => s.id === busySessionId)
+                if (found) {
+                  isSubagent = Boolean((found as { parentID?: string }).parentID)
+                  break
+                }
+              }
+            }
+          }
+          const soundPath = isSubagent
+            ? uiState.notificationSoundPaths.subagentStart
+            : uiState.notificationSoundPaths.start
+          playNotificationSound(soundPath)
         }
       }
     }
