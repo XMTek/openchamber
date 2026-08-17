@@ -50,13 +50,30 @@ const SoundPathRow: React.FC<{
   const { t } = useI18n();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const handleBrowse = async () => {
+    const bridge = (window as unknown as { __OPENCHAMBER_DESKTOP__?: { openDialog?: (opts: unknown) => Promise<{ canceled: boolean; filePaths: string[] }> } }).__OPENCHAMBER_DESKTOP__;
+    if (bridge?.openDialog) {
+      try {
+        const result = await bridge.openDialog({
+          properties: ['openFile'],
+          filters: [{ name: 'Audio Files', extensions: ['wav', 'mp3'] }],
+        });
+        if (!result.canceled && result.filePaths[0]) {
+          onChange(result.filePaths[0]);
+        }
+        return;
+      } catch {
+        // Fall through to input-based picker.
+      }
+    }
+    fileInputRef.current?.click();
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Electron extends File with a .path property pointing to the filesystem path.
     const path = (file as File & { path?: string }).path ?? file.name;
     onChange(path);
-    // Reset so selecting the same file again still triggers onChange.
     e.target.value = '';
   };
 
@@ -75,7 +92,7 @@ const SoundPathRow: React.FC<{
           variant="outline"
           size="sm"
           className="h-7 px-2 shrink-0"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => void handleBrowse()}
         >
           Browse
         </Button>
