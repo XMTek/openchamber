@@ -347,10 +347,17 @@ export const createSettingsHelpers = (dependencies) => {
     if (typeof candidate.notifyOnQuestion === 'boolean') {
       result.notifyOnQuestion = candidate.notifyOnQuestion;
     }
-    if (candidate.notificationTemplates && typeof candidate.notificationTemplates === 'object') {
-      result.notificationTemplates = candidate.notificationTemplates;
-    }
-    if (typeof candidate.summarizeLastMessage === 'boolean') {
+     if (candidate.notificationTemplates && typeof candidate.notificationTemplates === 'object') {
+       result.notificationTemplates = candidate.notificationTemplates;
+     }
+     if (candidate.notificationSoundPaths && typeof candidate.notificationSoundPaths === 'object' && !Array.isArray(candidate.notificationSoundPaths)) {
+       const soundPaths = {};
+       for (const key of ['start', 'subagentStart', 'completion', 'error', 'question', 'subtask']) {
+         if (typeof candidate.notificationSoundPaths[key] === 'string') soundPaths[key] = candidate.notificationSoundPaths[key];
+       }
+       if (Object.keys(soundPaths).length > 0) result.notificationSoundPaths = soundPaths;
+     }
+     if (typeof candidate.summarizeLastMessage === 'boolean') {
       result.summarizeLastMessage = candidate.summarizeLastMessage;
     }
     if (typeof candidate.summaryThreshold === 'number' && Number.isFinite(candidate.summaryThreshold)) {
