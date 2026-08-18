@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { getClientPlatform } from '@/lib/platform';
 import { useI18n } from '@/lib/i18n';
 import { playNotificationSound } from '@/lib/notificationSound';
+import { updateDesktopSettings } from '@/lib/persistence';
 import {
   SettingsSection,
   SettingsTwoColumn,
@@ -685,20 +686,20 @@ export const NotificationSettings: React.FC = () => {
                 key="start"
                 label="Start"
                 value={notificationSoundPaths.start}
-                onChange={(path) => setNotificationSoundPaths((prev) => ({ ...prev, start: path }))}
+                onChange={(path) => { const next = { ...notificationSoundPaths, start: path }; setNotificationSoundPaths(next); void updateDesktopSettings({ notificationSoundPaths: next }); }}
               />
               <SoundPathRow
                 key="subagentStart"
                 label="Subagent Start"
                 value={notificationSoundPaths.subagentStart}
-                onChange={(path) => setNotificationSoundPaths((prev) => ({ ...prev, subagentStart: path }))}
+                onChange={(path) => { const next = { ...notificationSoundPaths, subagentStart: path }; setNotificationSoundPaths(next); void updateDesktopSettings({ notificationSoundPaths: next }); }}
               />
               {(['completion', 'subtask', 'error', 'question'] as const).map((event) => (
                 <SoundPathRow
                   key={event}
                   label={t(TEMPLATE_EVENT_LABEL_KEYS[event as NotificationTemplateEvent])}
                   value={notificationSoundPaths[event]}
-                  onChange={(path) => setNotificationSoundPaths((prev) => ({ ...prev, [event]: path }))}
+                  onChange={(path) => { const next = { ...notificationSoundPaths, [event]: path }; setNotificationSoundPaths(next); void updateDesktopSettings({ notificationSoundPaths: next }); }}
                 />
               ))}
             </SettingsTwoColumn>
