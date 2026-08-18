@@ -397,7 +397,9 @@ async function materializeSessionFromServer(
 // Used to determine if user is currently viewing the session when a notification arrives.
 let _activeDirectory = ""
 let _activeSession = ""
-let _lastStartSoundMs = 0
+// Sessions that have already fired their start sound this busy lifetime.
+// Cleared when the session settles (idle) so a future restart can play again.
+const _startSoundFiredSessions = new Set<string>()
 const externallyViewedSessions = new Map<string, number>()
 const EXTERNAL_VIEW_TTL_MS = 15_000
 
@@ -1470,35 +1472,35 @@ export function handleEvent(
   // (unopened directories, or list/status races for just-created sessions).
   applyGlobalSessionStatusEvent(directory, payload)
 
-  // Play start sound when a session transitions to busy.
-  // Debounced to 2s — the same event can arrive from multiple paths.
+  // Play start sound when a session transitions to busy — once per session
+  // lifetime, not on every busy transition. The orchestrator session cycles
+  // busy→idle on every response, so a time-based debounce would fire on each
+  // turn. Track fired session IDs and clear them when the session settles so a
+  // future restart can play again.
   if (payload.type === "session.status") {
     const props = (payload as { properties?: { status?: { type?: string } } }).properties
     if (props?.status?.type === "busy") {
-      const now = Date.now()
-      if (now - _lastStartSoundMs > 2000) {
-        _lastStartSoundMs = now
+      const busySessionId = getSessionIdFromPayload(payload)
+      if (busySessionId && !_startSoundFiredSessions.has(busySessionId)) {
+        _startSoundFiredSessions.add(busySessionId)
         const uiState = useUIStore.getState()
         if (uiState.nativeNotificationsEnabled) {
           // Subagent/task sessions carry a parentID; play a distinct sound so
           // users can configure or silence subagent starts independently.
-          const busySessionId = getSessionIdFromPayload(payload)
           let isSubagent = false
-          if (busySessionId) {
-            const dirStore = directory ? childStores.getChild(directory) : undefined
-            const storeState = dirStore ? getDirectoryEventState(dirStore, batch) : null
-            const busySession = storeState?.session.find((s) => s.id === busySessionId)
-            if (busySession) {
-              isSubagent = Boolean((busySession as { parentID?: string }).parentID)
-            } else {
-              // Fallback: scan all child stores for the session.
-              for (const [, childStore] of childStores.children) {
-                const state = getDirectoryEventState(childStore, batch)
-                const found = state.session.find((s) => s.id === busySessionId)
-                if (found) {
-                  isSubagent = Boolean((found as { parentID?: string }).parentID)
-                  break
-                }
+          const dirStore = directory ? childStores.getChild(directory) : undefined
+          const storeState = dirStore ? getDirectoryEventState(dirStore, batch) : null
+          const busySession = storeState?.session.find((s) => s.id === busySessionId)
+          if (busySession) {
+            isSubagent = Boolean((busySession as { parentID?: string }).parentID)
+          } else {
+            // Fallback: scan all child stores for the session.
+            for (const [, childStore] of childStores.children) {
+              const state = getDirectoryEventState(childStore, batch)
+              const found = state.session.find((s) => s.id === busySessionId)
+              if (found) {
+                isSubagent = Boolean((found as { parentID?: string }).parentID)
+                break
               }
             }
           }
@@ -1509,6 +1511,18 @@ export function handleEvent(
         }
       }
     }
+  }
+
+  // Clear the fired marker when a session settles so a future restart can play
+  // the start sound again. session.idle is the authoritative settle event; a
+  // session.status snapshot with type idle covers reconnect/idle-via-snapshot.
+  if (
+    payload.type === "session.idle"
+    || (payload.type === "session.status"
+      && (payload as { properties?: { status?: { type?: string } } }).properties?.status?.type === "idle")
+  ) {
+    const idleSessionId = getSessionIdFromPayload(payload)
+    if (idleSessionId) _startSoundFiredSessions.delete(idleSessionId)
   }
 
   // Global events
